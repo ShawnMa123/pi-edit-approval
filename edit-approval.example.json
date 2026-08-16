@@ -1,0 +1,8 @@
+{
+  "workspaceWrites": "ask",
+  "outsideWrites": "ask",
+  "allowSessionBypassInWorkspace": true,
+  "allowSessionBypassOutside": false,
+  "gateBash": false,
+  "extraMutatingTools": []
+}

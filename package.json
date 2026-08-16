@@ -1,0 +1,44 @@
+{
+  "name": "pi-edit-approval",
+  "version": "0.1.0",
+  "description": "Pi extension: confirm before write/edit. Reads always allowed; configurable workspace vs outside-repo write policy.",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-extension",
+    "pi-coding-agent",
+    "approval",
+    "permissions",
+    "write-guard",
+    "safety",
+    "edit-approval"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShawnMa123/pi-edit-approval.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ShawnMa123/pi-edit-approval/issues"
+  },
+  "homepage": "https://github.com/ShawnMa123/pi-edit-approval#readme",
+  "author": "ShawnMa123",
+  "files": [
+    "extensions",
+    "edit-approval.example.json",
+    "LICENSE",
+    "README.md"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}
