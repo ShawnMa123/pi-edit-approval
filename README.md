@@ -1,5 +1,6 @@
 # pi-edit-approval
 
+[![npm version](https://img.shields.io/npm/v/pi-edit-approval.svg)](https://www.npmjs.com/package/pi-edit-approval)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 **Pi** coding-agent extension that asks before the agent modifies files.
@@ -17,27 +18,45 @@ Keywords for discovery: `pi-package`, `pi`, `pi-extension`, `pi-coding-agent`.
 
 Requires [Pi](https://pi.dev) (`@earendil-works/pi-coding-agent`).
 
-### From GitHub (works today)
+You can install from **npm** or **GitHub** — both are supported.
 
-```bash
-pi install git:github.com/ShawnMa123/pi-edit-approval
-```
+### From npm (recommended)
 
-Pin a tag when you publish releases:
-
-```bash
-pi install git:github.com/ShawnMa123/pi-edit-approval@v0.1.0
-```
-
-### From npm (after publish)
+Published as [`pi-edit-approval`](https://www.npmjs.com/package/pi-edit-approval) on the public npm registry.
 
 ```bash
 pi install npm:pi-edit-approval
 ```
 
+Pin a version:
+
+```bash
+pi install npm:pi-edit-approval@0.1.0
+```
+
+### From GitHub
+
+```bash
+pi install git:github.com/ShawnMa123/pi-edit-approval
+```
+
+Equivalent forms:
+
+```bash
+pi install https://github.com/ShawnMa123/pi-edit-approval
+pi install git:github.com/ShawnMa123/pi-edit-approval@main
+```
+
+Pin a tag or commit when you want a fixed revision:
+
+```bash
+pi install git:github.com/ShawnMa123/pi-edit-approval@v0.1.0
+```
+
 ### Try once without installing
 
 ```bash
+pi -e npm:pi-edit-approval
 pi -e git:github.com/ShawnMa123/pi-edit-approval
 ```
 
@@ -49,9 +68,13 @@ pi install /path/to/pi-edit-approval
 pi -e ./extensions/edit-approval.ts
 ```
 
-Project-local install (writes `.pi/settings.json`):
+### Project-local install
+
+Writes to `.pi/settings.json` (shared with the repo) instead of your user settings:
 
 ```bash
+pi install -l npm:pi-edit-approval
+# or
 pi install -l git:github.com/ShawnMa123/pi-edit-approval
 ```
 
@@ -212,7 +235,7 @@ pi-edit-approval/
 }
 ```
 
-That `pi-package` keyword is what the [Pi package gallery](https://pi.dev/packages) uses for discovery **after** the package is published to npm.
+That `pi-package` keyword is what the [Pi package gallery](https://pi.dev/packages) uses for discovery (this package is on npm, so it is eligible for the gallery index).
 
 ## Development
 
@@ -230,10 +253,11 @@ No build step: Pi loads the TypeScript extension directly.
 
 ## Uninstall
 
+Remove whichever source you installed:
+
 ```bash
-pi remove git:github.com/ShawnMa123/pi-edit-approval
-# after npm publish:
 pi remove npm:pi-edit-approval
+pi remove git:github.com/ShawnMa123/pi-edit-approval
 ```
 
 Also delete `~/.pi/agent/edit-approval.json` if you no longer need it.
