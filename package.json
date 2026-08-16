@@ -1,7 +1,7 @@
 {
   "name": "pi-edit-approval",
-  "version": "0.1.0",
-  "description": "Pi extension: confirm before write/edit. Reads always allowed; configurable workspace vs outside-repo write policy.",
+  "version": "0.2.0",
+  "description": "Pi extension: confirm before write/edit with profiles, diff preview, and persistent allow/deny memory. Reads always allowed.",
   "license": "GPL-3.0-only",
   "type": "module",
   "engines": {
@@ -30,6 +30,7 @@
   "files": [
     "extensions",
     "edit-approval.example.json",
+    "CHANGELOG.md",
     "LICENSE",
     "README.md"
   ],

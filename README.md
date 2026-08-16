@@ -7,10 +7,13 @@
 
 - **Reads stay free** — `read` / `grep` / `find` / `ls` are never prompted
 - **Writes need approval** — built-in `write` / `edit`, plus common mutator tool names (e.g. MCP `replace`)
-- **Workspace-aware** — separate policies for paths inside vs outside the project (git root or cwd)
-- **Session shortcuts** — allow one file, or all workspace writes, for the rest of the session
+- **Profiles** — `strict` / `workspace` / `review` / `off` presets
+- **Diff preview** — approval UI shows a compact unified-style diff for edits
+- **Persistent memory** — always allow/deny a file or directory across sessions
+- **Protected paths** — hard-deny for `.env`, keys, etc.
+- **Workspace-aware** — separate policies inside vs outside the git root (or cwd)
 
-Keywords for discovery: `pi-package`, `pi`, `pi-extension`, `pi-coding-agent`.
+Keywords: `pi-package`, `pi`, `pi-extension`, `pi-coding-agent`.
 
 > Pi has no built-in “confirm before edit” switch. This package adds that gate via the extension `tool_call` hook.
 
@@ -18,11 +21,9 @@ Keywords for discovery: `pi-package`, `pi`, `pi-extension`, `pi-coding-agent`.
 
 Requires [Pi](https://pi.dev) (`@earendil-works/pi-coding-agent`).
 
-You can install from **npm** or **GitHub** — both are supported.
+You can install from **npm** or **GitHub**.
 
 ### From npm (recommended)
-
-Published as [`pi-edit-approval`](https://www.npmjs.com/package/pi-edit-approval) on the public npm registry.
 
 ```bash
 pi install npm:pi-edit-approval
@@ -31,7 +32,7 @@ pi install npm:pi-edit-approval
 Pin a version:
 
 ```bash
-pi install npm:pi-edit-approval@0.1.0
+pi install npm:pi-edit-approval@0.2.0
 ```
 
 ### From GitHub
@@ -40,17 +41,9 @@ pi install npm:pi-edit-approval@0.1.0
 pi install git:github.com/ShawnMa123/pi-edit-approval
 ```
 
-Equivalent forms:
-
 ```bash
 pi install https://github.com/ShawnMa123/pi-edit-approval
-pi install git:github.com/ShawnMa123/pi-edit-approval@main
-```
-
-Pin a tag or commit when you want a fixed revision:
-
-```bash
-pi install git:github.com/ShawnMa123/pi-edit-approval@v0.1.0
+pi install git:github.com/ShawnMa123/pi-edit-approval@v0.2.0
 ```
 
 ### Try once without installing
@@ -64,17 +57,13 @@ pi -e git:github.com/ShawnMa123/pi-edit-approval
 
 ```bash
 pi install /path/to/pi-edit-approval
-# or
 pi -e ./extensions/edit-approval.ts
 ```
 
 ### Project-local install
 
-Writes to `.pi/settings.json` (shared with the repo) instead of your user settings:
-
 ```bash
 pi install -l npm:pi-edit-approval
-# or
 pi install -l git:github.com/ShawnMa123/pi-edit-approval
 ```
 
@@ -82,28 +71,48 @@ After install, start a **new** session or run **`/reload`**.
 
 If you previously copied `edit-approval.ts` into `~/.pi/agent/extensions/`, remove that copy to avoid loading the extension twice.
 
+## Profiles
+
+| Profile | Inside workspace | Outside workspace | Notes |
+|---------|------------------|-------------------|--------|
+| **`strict`** (default) | ask | ask | Safest everyday default |
+| **`workspace`** | **allow** | ask | Codex-style workspace-write |
+| **`review`** | ask | ask | Larger diff preview (`diffMaxLines: 80`) |
+| **`off`** | allow | allow | Disables write gating |
+
+Switch live (persists to config):
+
+```text
+/edit-approval profile workspace
+/edit-approval profile strict
+```
+
 ## Default behavior
 
-| Tool / path | Default |
-|-------------|---------|
+| Tool / path | Default (`strict`) |
+|-------------|--------------------|
 | `read`, `grep`, `find`, `ls` | Always allow |
-| `write` / `edit` **inside** workspace | **Ask** |
-| `write` / `edit` **outside** workspace | **Ask** (labeled `OUTSIDE workspace`) |
-| Other tools matching mutator name patterns | Ask (same path rules) |
+| `write` / `edit` inside workspace | **Ask** (+ diff preview) |
+| `write` / `edit` outside workspace | **Ask** (labeled `OUTSIDE workspace`) |
+| Paths matching `protectedPaths` | **Deny** (no prompt) |
+| Paths in persistent allow memory | Allow |
+| Paths in persistent deny memory | Deny |
 | `bash` | Not gated (see `gateBash`) |
-| Non-interactive (`-p` / no UI) when policy is `ask` | **Block** (no silent writes) |
+| Non-interactive (`-p` / no UI) when policy is `ask` | **Block** |
 
 **Workspace root** = `git rev-parse --show-toplevel` when available, otherwise the session cwd.
 
 ### Prompt choices
 
-When a confirmation appears you can typically choose:
-
-- **Yes** — allow this call only  
-- **Yes, this file this session** — skip further prompts for that absolute path  
-- **Yes, all workspace writes this session** — if enabled in config (in-workspace only)  
-- **Yes, all outside writes this session** — only if you enable it in config  
-- **No** — block the tool call  
+- **Yes** — this call only  
+- **Yes, this file this session**  
+- **Yes, all workspace writes this session** (if enabled)  
+- **Yes, all outside writes this session** (if enabled)  
+- **Yes, always allow this file** — persists to memory  
+- **Yes, always allow this directory** — persists prefix allow  
+- **No**  
+- **No, this file this session**  
+- **No, always deny this file** — persists to memory  
 
 ## Configuration
 
@@ -113,25 +122,25 @@ Optional file:
 ~/.pi/agent/edit-approval.json
 ```
 
-Copy the example:
+Copy the example from the package:
 
 ```bash
-# Linux / macOS
-cp "$(npm root -g)/../..."   # or copy from the cloned repo:
+# from a clone / install tree
 cp edit-approval.example.json ~/.pi/agent/edit-approval.json
+```
 
-# Windows (PowerShell)
+```powershell
 Copy-Item edit-approval.example.json $env:USERPROFILE\.pi\agent\edit-approval.json
 ```
 
-### Example: ask everywhere (default)
+### Example: strict (default)
 
 ```json
 {
-  "workspaceWrites": "ask",
-  "outsideWrites": "ask",
-  "allowSessionBypassInWorkspace": true,
-  "allowSessionBypassOutside": false,
+  "profile": "strict",
+  "persistentMemory": true,
+  "diffMaxLines": 40,
+  "protectedPaths": [".env", ".env.", "id_rsa", "id_ed25519", ".npmrc", "credentials"],
   "gateBash": false,
   "extraMutatingTools": []
 }
@@ -139,52 +148,93 @@ Copy-Item edit-approval.example.json $env:USERPROFILE\.pi\agent\edit-approval.js
 
 ### Example: Codex-style workspace-write
 
-Allow free edits inside the repo; confirm (or deny) anything outside:
+```json
+{
+  "profile": "workspace"
+}
+```
+
+Or:
 
 ```json
 {
+  "profile": "strict",
   "workspaceWrites": "allow",
-  "outsideWrites": "ask",
-  "allowSessionBypassInWorkspace": true,
-  "allowSessionBypassOutside": false,
-  "gateBash": false,
-  "extraMutatingTools": []
+  "outsideWrites": "ask"
 }
 ```
 
-### Example: hard deny outside the repo
-
-```json
-{
-  "workspaceWrites": "ask",
-  "outsideWrites": "deny"
-}
-```
+Explicit `workspaceWrites` / `outsideWrites` override the profile baseline when set in the JSON file.  
+`/edit-approval profile <name>` rewrites those fields to match the preset.
 
 ### Options
 
 | Key | Type | Default | Meaning |
 |-----|------|---------|---------|
-| `workspaceWrites` | `"allow"` \| `"ask"` \| `"deny"` | `"ask"` | Policy for paths inside the workspace |
-| `outsideWrites` | `"allow"` \| `"ask"` \| `"deny"` | `"ask"` | Policy for paths outside the workspace |
-| `allowSessionBypassInWorkspace` | `boolean` | `true` | Offer “all workspace writes this session” |
-| `allowSessionBypassOutside` | `boolean` | `false` | Offer “all outside writes this session” |
-| `gateBash` | `boolean` | `false` | If `true`, confirm every `bash` call |
-| `extraMutatingTools` | `string[]` | `[]` | Extra tool names to treat as mutators |
+| `profile` | `strict` \| `workspace` \| `review` \| `off` | `strict` | Named preset |
+| `workspaceWrites` | `allow` \| `ask` \| `deny` | from profile | Inside workspace |
+| `outsideWrites` | `allow` \| `ask` \| `deny` | from profile | Outside workspace |
+| `allowSessionBypassInWorkspace` | `boolean` | `true` | Offer session-wide workspace allow |
+| `allowSessionBypassOutside` | `boolean` | `false` | Offer session-wide outside allow |
+| `persistentMemory` | `boolean` | `true` | Offer always-allow / always-deny |
+| `diffMaxLines` | `number` | `40` | Diff/preview size in the prompt |
+| `protectedPaths` | `string[]` | see example | Substring / `*.ext` hard-deny |
+| `gateBash` | `boolean` | `false` | Confirm every `bash` (noisy) |
+| `extraMutatingTools` | `string[]` | `[]` | Extra tool names to gate |
 
-Reload config without restarting Pi:
+Reload without restarting Pi:
 
 ```text
 /edit-approval reload
 ```
 
+## Persistent memory
+
+File:
+
+```text
+~/.pi/agent/edit-approval-memory.json
+```
+
+```json
+{
+  "allowPaths": [],
+  "allowPrefixes": [],
+  "denyPaths": [],
+  "denyPrefixes": []
+}
+```
+
+Managed from the approval UI or:
+
+```text
+/edit-approval allow path/to/file
+/edit-approval deny path/to/file
+/edit-approval forget path/to/file
+/edit-approval memory
+```
+
+**Order of checks** (first match wins where applicable):
+
+1. Session deny  
+2. Protected paths → deny  
+3. Memory deny → deny  
+4. Memory allow → allow  
+5. Session allow / session workspace|outside bypass → allow  
+6. Policy `allow` / `ask` / `deny`  
+
 ## Commands
 
 | Command | Action |
 |---------|--------|
-| `/edit-approval` | Show workspace root, policies, session bypass state, config path |
-| `/edit-approval reset` | Clear session allow-lists / bypasses |
-| `/edit-approval reload` | Re-read `~/.pi/agent/edit-approval.json` |
+| `/edit-approval` | Status (profile, policies, session, memory counts) |
+| `/edit-approval reset` | Clear session allow/deny bypasses |
+| `/edit-approval reload` | Re-read config + memory files |
+| `/edit-approval profile <name>` | Set profile and persist |
+| `/edit-approval allow <path>` | Persist allow path |
+| `/edit-approval deny <path>` | Persist deny path |
+| `/edit-approval forget <path>` | Remove path from memory |
+| `/edit-approval memory` | Dump memory entries |
 
 ## What gets gated
 
@@ -197,53 +247,46 @@ Also matched by name (case-insensitive), including MCP-style names:
 - `replace`, `create_file`, `delete_file`, `apply_patch`, `str_replace`
 - Patterns like `fastctx_replace`, `mcp_foo_write`, …
 
-Path fields inspected on tool input:
-
+Path fields inspected:  
 `path`, `file_path`, `filePath`, `filepath`, `target`, `target_path`, `filename`, `paths[]`
 
-Add stubborn custom tool names via `extraMutatingTools`.
+Edit preview also understands `oldText` / `newText` and `old_string` / `new_string`.
 
 ## Limitations
 
-1. **`bash` can bypass file gates** unless `gateBash` is `true` (noisy). Redirects like `echo hi > file` are not parsed specially.
-2. This is **not an OS sandbox**. It only intercepts Pi tool calls the extension sees.
-3. Unknown mutators with odd argument shapes may only show a generic confirmation.
-4. In **print / headless** modes without UI, `ask` becomes a hard block by design.
+1. **`bash` can bypass file gates** unless `gateBash` is `true`. Redirects are not parsed by default.  
+2. **Not an OS sandbox** — only Pi tool calls this extension sees.  
+3. Diff preview is a compact summary, not a full side-by-side reviewer (`pi-show-diffs` is complementary).  
+4. In **print / headless** modes without UI, `ask` becomes a hard block.
 
-For stronger isolation, combine with containers or a sandbox package; see [Pi security docs](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/security.md).
+For stronger isolation, use containers or a sandbox package; see [Pi security docs](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/security.md).
 
 ## Package layout
 
 ```text
 pi-edit-approval/
-├── package.json                 # pi-package manifest + keywords
-├── extensions/
-│   └── edit-approval.ts         # extension entry
-├── edit-approval.example.json   # sample config
-├── LICENSE                      # GPL-3.0-only
+├── package.json
+├── extensions/edit-approval.ts
+├── edit-approval.example.json
+├── CHANGELOG.md
+├── LICENSE
 └── README.md
 ```
-
-`package.json` declares:
 
 ```json
 {
   "keywords": ["pi-package", "pi", "pi-extension", "pi-coding-agent"],
-  "pi": {
-    "extensions": ["./extensions"]
-  }
+  "pi": { "extensions": ["./extensions"] }
 }
 ```
 
-That `pi-package` keyword is what the [Pi package gallery](https://pi.dev/packages) uses for discovery (this package is on npm, so it is eligible for the gallery index).
+The `pi-package` keyword is used by the [Pi package gallery](https://pi.dev/packages).
 
 ## Development
 
 ```bash
 git clone https://github.com/ShawnMa123/pi-edit-approval.git
 cd pi-edit-approval
-
-# load from this checkout
 pi -e ./extensions/edit-approval.ts
 # or
 pi install .
@@ -253,14 +296,17 @@ No build step: Pi loads the TypeScript extension directly.
 
 ## Uninstall
 
-Remove whichever source you installed:
-
 ```bash
 pi remove npm:pi-edit-approval
 pi remove git:github.com/ShawnMa123/pi-edit-approval
 ```
 
-Also delete `~/.pi/agent/edit-approval.json` if you no longer need it.
+Optional cleanup:
+
+```bash
+rm ~/.pi/agent/edit-approval.json
+rm ~/.pi/agent/edit-approval-memory.json
+```
 
 ## License
 
@@ -270,5 +316,6 @@ Also delete `~/.pi/agent/edit-approval.json` if you no longer need it.
 
 - [Pi packages documentation](https://pi.dev/docs/latest/packages)
 - [Pi extensions documentation](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/extensions.md)
-- Upstream examples: `permission-gate.ts`, `protected-paths.ts` in the Pi repo
-- Similar ecosystem packages: `pi-show-diffs`, various `pi-permission-*` tools (heavier / different focus)
+- Upstream examples: `permission-gate.ts`, `protected-paths.ts`
+- Complementary: [`pi-show-diffs`](https://www.npmjs.com/package/pi-show-diffs) (full diff UI)
+- Heavier alternatives: various `pi-permission-*` packages

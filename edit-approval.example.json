@@ -1,8 +1,19 @@
 {
+  "profile": "strict",
   "workspaceWrites": "ask",
   "outsideWrites": "ask",
   "allowSessionBypassInWorkspace": true,
   "allowSessionBypassOutside": false,
+  "persistentMemory": true,
+  "diffMaxLines": 40,
+  "protectedPaths": [
+    ".env",
+    ".env.",
+    "id_rsa",
+    "id_ed25519",
+    ".npmrc",
+    "credentials"
+  ],
   "gateBash": false,
   "extraMutatingTools": []
 }
